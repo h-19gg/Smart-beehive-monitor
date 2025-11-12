@@ -3,278 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام خلية النحل الذكية - Smart BeeHive Pro</title>
+    <title>نظام خلية النحل الذكية</title>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        :root { --primary: #2E8B57; --secondary: #FF6B35; --accent: #4ECDC4; --dark: #1A1A2E; --light: #F8F9FA; }
+        body { background: linear-gradient(135deg, var(--dark) 0%, #16213E 100%); color: var(--light); min-height: 100vh; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; padding: 30px 0; background: linear-gradient(135deg, rgba(46, 139, 87, 0.9) 0%, rgba(255, 107, 53, 0.8) 100%); border-radius: 20px; margin-bottom: 30px; }
+        .main-title { font-size: 3em; font-weight: 700; margin-bottom: 10px; }
+        .engineer-name { font-size: 1.2em; color: var(--accent); font-weight: 600; margin-top: 10px; }
+        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; margin-bottom: 40px; }
+        .sensor-card { background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%); border-radius: 20px; padding: 30px; text-align: center; backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .sensor-icon { font-size: 3.5em; margin-bottom: 20px; }
+        .sensor-value { font-size: 3em; font-weight: 700; margin: 10px 0; background: linear-gradient(135deg, var(--accent), var(--primary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .status-bar { display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, rgba(46, 139, 87, 0.2) 0%, rgba(255, 107, 53, 0.2) 100%); padding: 20px 30px; border-radius: 15px; margin-top: 30px; backdrop-filter: blur(10px); }
         
-        :root {
-            --primary: #2E8B57;
-            --secondary: #FF6B35;
-            --accent: #4ECDC4;
-            --dark: #1A1A2E;
-            --light: #F8F9FA;
-        }
-        
-        body {
-            background: linear-gradient(135deg, var(--dark) 0%, #16213E 100%);
-            color: var(--light);
-            min-height: 100vh;
-            line-height: 1.6;
-        }
-        
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        .header {
-            text-align: center;
-            padding: 30px 0;
-            background: linear-gradient(135deg, rgba(46, 139, 87, 0.9) 0%, rgba(255, 107, 53, 0.8) 100%);
-            border-radius: 20px;
-            margin-bottom: 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="hexagons" width="100" height="100" patternUnits="userSpaceOnUse"><path d="M50 0L93.3 25V75L50 100L6.7 75V25Z" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="2"/></pattern></defs><rect width="100" height="100" fill="url(%23hexagons)"/></svg>');
-        }
-        
-        .main-title {
-            font-size: 3em;
-            font-weight: 700;
-            margin-bottom: 10px;
-            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
-            position: relative;
-        }
-        
-        .subtitle {
-            font-size: 1.4em;
-            opacity: 0.9;
-            margin-bottom: 5px;
-            position: relative;
-        }
-        
-        .engineer-name {
-            font-size: 1.2em;
-            color: var(--accent);
-            font-weight: 600;
-            position: relative;
-            margin-top: 10px;
-        }
-        
-        .dashboard {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px;
-            margin-bottom: 40px;
-        }
-        
-        .sensor-card {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-            border-radius: 20px;
-            padding: 30px;
-            text-align: center;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .sensor-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary), var(--accent));
-        }
-        
-        .sensor-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
-        }
-        
-        .sensor-icon {
-            font-size: 3.5em;
-            margin-bottom: 20px;
-            filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.3));
-        }
-        
-        .sensor-label {
-            font-size: 1.1em;
-            opacity: 0.8;
-            margin-bottom: 15px;
-            font-weight: 500;
-        }
-        
-        .sensor-value {
-            font-size: 3em;
-            font-weight: 700;
-            margin: 10px 0;
-            background: linear-gradient(135deg, var(--accent), var(--primary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-        }
-        
-        .sensor-unit {
-            font-size: 1.3em;
-            opacity: 0.7;
-            font-weight: 500;
-        }
-        
-        .charts-section {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 25px;
-            margin: 40px 0;
-        }
-        
-        .chart-container {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 20px;
-            padding: 25px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .chart-title {
-            font-size: 1.3em;
-            margin-bottom: 20px;
-            text-align: center;
-            color: var(--accent);
-            font-weight: 600;
-        }
-        
-        .chart-canvas {
-            width: 100% !important;
-            height: 300px !important;
-        }
-        
-        .history-section {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 20px;
-            padding: 25px;
-            margin: 40px 0;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .section-title {
-            font-size: 1.5em;
-            margin-bottom: 25px;
-            text-align: center;
-            color: var(--accent);
-            font-weight: 600;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: rgba(255, 255, 255, 0.02);
-            border-radius: 15px;
-            overflow: hidden;
-        }
-        
-        th {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            padding: 15px;
-            text-align: center;
-            font-weight: 600;
-            font-size: 1.1em;
-        }
-        
-        td {
-            padding: 15px;
-            text-align: center;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            transition: background 0.3s ease;
-        }
-        
-        tr:hover td {
-            background: rgba(255, 255, 255, 0.05);
-        }
-        
-        .status-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: linear-gradient(135deg, rgba(46, 139, 87, 0.2) 0%, rgba(255, 107, 53, 0.2) 100%);
-            padding: 20px 30px;
-            border-radius: 15px;
-            margin-top: 30px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .status-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 1.1em;
-        }
-        
-        .btn {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 1em;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-        }
-        
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
-        }
+        .history-section { background: rgba(255, 255, 255, 0.05); border-radius: 20px; padding: 25px; margin: 40px 0; backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        table { width: 100%; border-collapse: collapse; background: rgba(255, 255, 255, 0.02); border-radius: 15px; overflow: hidden; }
+        th { background: linear-gradient(135deg, var(--primary), var(--secondary)); padding: 15px; text-align: center; font-weight: 600; }
+        td { padding: 15px; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
         
         @media (max-width: 768px) {
-            .charts-section {
-                grid-template-columns: 1fr;
-            }
-            
-            .main-title {
-                font-size: 2.2em;
-            }
-            
-            .status-bar {
-                flex-direction: column;
-                gap: 15px;
-                text-align: center;
-            }
-            
-            .sensor-value {
-                font-size: 2.5em;
-            }
-        }
-        
-        .loading {
-            text-align: center;
-            padding: 40px;
-            font-size: 1.2em;
+            .status-bar { flex-direction: column; gap: 15px; text-align: center; }
+            .main-title { font-size: 2.2em; }
         }
     </style>
 </head>
@@ -282,53 +35,18 @@
     <div class="container">
         <header class="header">
             <h1 class="main-title">🐝 نظام خلية النحل الذكية</h1>
-            <div class="subtitle">Smart BeeHive Pro Monitoring System</div>
             <div class="engineer-name">Eng. Hussein Fahim Al_khazaali</div>
         </header>
         
-        <div class="dashboard" id="dashboard">
-            <div class="sensor-card">
-                <div class="sensor-icon">🌡️</div>
-                <div class="sensor-label">درجة الحرارة</div>
-                <div class="sensor-value" id="temperature">--</div>
-                <div class="sensor-unit">°C</div>
-            </div>
-            
-            <div class="sensor-card">
-                <div class="sensor-icon">💧</div>
-                <div class="sensor-label">الرطوبة</div>
-                <div class="sensor-value" id="humidity">--</div>
-                <div class="sensor-unit">%</div>
-            </div>
-            
-            <div class="sensor-card">
-                <div class="sensor-icon">⚖️</div>
-                <div class="sensor-label">الوزن</div>
-                <div class="sensor-value" id="weight">--</div>
-                <div class="sensor-unit">kg</div>
-            </div>
-            
-            <div class="sensor-card">
-                <div class="sensor-icon">🔋</div>
-                <div class="sensor-label">البطارية</div>
-                <div class="sensor-value" id="battery">--</div>
-                <div class="sensor-unit">%</div>
-            </div>
-        </div>
-
-        <div class="charts-section">
-            <div class="chart-container">
-                <div class="chart-title">📈 تطور درجة الحرارة</div>
-                <canvas id="tempChart" class="chart-canvas"></canvas>
-            </div>
-            <div class="chart-container">
-                <div class="chart-title">📊 تطور الرطوبة</div>
-                <canvas id="humidityChart" class="chart-canvas"></canvas>
-            </div>
+        <div class="dashboard">
+            <div class="sensor-card"><div class="sensor-icon">🌡️</div><div class="sensor-value" id="temperature">--</div><div>°C</div></div>
+            <div class="sensor-card"><div class="sensor-icon">💧</div><div class="sensor-value" id="humidity">--</div><div>%</div></div>
+            <div class="sensor-card"><div class="sensor-icon">⚖️</div><div class="sensor-value" id="weight">--</div><div>kg</div></div>
+            <div class="sensor-card"><div class="sensor-icon">🔋</div><div class="sensor-value" id="battery">--</div><div>%</div></div>
         </div>
 
         <div class="history-section">
-            <div class="section-title">🕒 سجل القراءات</div>
+            <div style="font-size: 1.5em; margin-bottom: 25px; text-align: center; color: var(--accent); font-weight: 600;">🕒 آخر القراءات</div>
             <table>
                 <thead>
                     <tr>
@@ -346,23 +64,14 @@
         </div>
 
         <div class="status-bar">
-            <div class="status-item">
-                <span id="cloudStatus">🔄 جاري التحميل...</span>
-            </div>
-            <div class="status-item">
-                <span id="lastUpdate">آخر تحديث: --</span>
-            </div>
-            <div class="status-item">
-                <span id="readingsCount">عدد القراءات: 0</span>
-            </div>
-            <button class="btn" onclick="saveCurrentReading()">
-                💾 حفظ القراءة الحالية
-            </button>
+            <div id="status">🔄 جاري التحميل...</div>
+            <div id="lastUpdate">آخر تحديث: --</div>
+            <div id="readingsCount">عدد القراءات: 0</div>
         </div>
     </div>
 
     <script>
-        // 🔒 الإعدادات الآمنة - استبدل هذه بالقيم الفعلية
+        // 🔒 إعدادات Supabase الآمنة
         const SUPABASE_CONFIG = {
             url: 'https://xtbnjqfactpytowjtzfj.supabase.co',
             key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0Ym5qcWZhY3RweXRvd2p0emZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyNzQ4NDgsImV4cCI6MjA3Nzg1MDg0OH0.W0gI5_dshGOm7qsVc_h0X7qHpbbsawpQW2Wy74PpUgg'
@@ -371,204 +80,67 @@
         // 🔌 تهيئة Supabase
         const supabase = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.key);
 
-        // 📊 تهيئة الرسوم البيانية
-        let tempChart, humidityChart;
-        const chartHistory = { temperatures: [], humidities: [], labels: [] };
-
-        function initializeCharts() {
-            const tempCtx = document.getElementById('tempChart').getContext('2d');
-            const humidityCtx = document.getElementById('humidityChart').getContext('2d');
-            
-            tempChart = new Chart(tempCtx, {
-                type: 'line',
-                data: {
-                    labels: chartHistory.labels,
-                    datasets: [{
-                        label: 'درجة الحرارة °C',
-                        data: chartHistory.temperatures,
-                        borderColor: '#4ECDC4',
-                        backgroundColor: 'rgba(78, 205, 196, 0.1)',
-                        borderWidth: 3,
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: true, rtl: true }
-                    },
-                    scales: {
-                        y: { beginAtZero: false }
-                    }
-                }
-            });
-
-            humidityChart = new Chart(humidityCtx, {
-                type: 'line',
-                data: {
-                    labels: chartHistory.labels,
-                    datasets: [{
-                        label: 'الرطوبة %',
-                        data: chartHistory.humidities,
-                        borderColor: '#2E8B57',
-                        backgroundColor: 'rgba(46, 139, 87, 0.1)',
-                        borderWidth: 3,
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: true, rtl: true }
-                    },
-                    scales: {
-                        y: { beginAtZero: false }
-                    }
-                }
-            });
-        }
-
-        // 📡 جلب البيانات من ESP32
-        async function fetchDataFromESP32() {
-            const endpoints = [
-                'http://192.168.1.192/data',
-                'http://192.168.1.192/api/sensors',
-                'http://192.168.1.192/sensor-data',
-                'http://192.168.1.192/'
-            ];
-
-            for (const endpoint of endpoints) {
-                try {
-                    console.log(`🔍 جرب ${endpoint}`);
-                    const response = await fetch(endpoint, { 
-                        method: 'GET',
-                        headers: { 'Accept': 'application/json' }
-                    });
-                    
-                    if (response.ok) {
-                        const data = await response.json();
-                        console.log('✅ تم استقبال البيانات:', data);
-                        return data;
-                    }
-                } catch (error) {
-                    console.log(`❌ فشل ${endpoint}:`, error.message);
-                    continue;
-                }
-            }
-            
-            // بيانات تجريبية إذا فشل الاتصال
-            return {
-                temperature: (25 + Math.random() * 5).toFixed(1),
-                humidity: (60 + Math.random() * 10).toFixed(1),
-                weight: (12 + Math.random() * 2).toFixed(1),
-                battery: (80 + Math.random() * 10).toFixed(1),
-                isDemo: true
-            };
-        }
-
-        // 🎯 تحديث الواجهة
-        function updateDashboard(data) {
-            if (data) {
-                document.getElementById('temperature').textContent = data.temperature || '--';
-                document.getElementById('humidity').textContent = data.humidity || '--';
-                document.getElementById('weight').textContent = data.weight || '--';
-                document.getElementById('battery').textContent = data.battery || '--';
-
-                // تحديث الرسوم البيانية
-                const now = new Date();
-                const timeLabel = now.toLocaleTimeString('ar-SA');
-                
-                chartHistory.labels.push(timeLabel);
-                chartHistory.temperatures.push(parseFloat(data.temperature));
-                chartHistory.humidities.push(parseFloat(data.humidity));
-                
-                // الحفاظ على آخر 20 نقطة فقط
-                if (chartHistory.labels.length > 20) {
-                    chartHistory.labels.shift();
-                    chartHistory.temperatures.shift();
-                    chartHistory.humidities.shift();
-                }
-                
-                if (tempChart && humidityChart) {
-                    tempChart.update();
-                    humidityChart.update();
-                }
-
-                // تحديث الحالة
-                const statusElement = document.getElementById('cloudStatus');
-                if (data.isDemo) {
-                    statusElement.innerHTML = '🟡 وضع التجربة - بيانات افتراضية';
-                    statusElement.style.color = '#FFA500';
-                } else {
-                    statusElement.innerHTML = '✅ متصل بالجهاز مباشرة';
-                    statusElement.style.color = '#4CAF50';
-                }
-
-                document.getElementById('lastUpdate').textContent = 
-                    `آخر تحديث: ${now.toLocaleTimeString('ar-SA')}`;
-            }
-        }
-
-        // 💾 حفظ البيانات في Supabase
-        async function saveCurrentReading() {
-            try {
-                const currentData = {
-                    temperature: parseFloat(document.getElementById('temperature').textContent),
-                    humidity: parseFloat(document.getElementById('humidity').textContent),
-                    weight: parseFloat(document.getElementById('weight').textContent),
-                    battery: parseFloat(document.getElementById('battery').textContent),
-                    created_at: new Date().toISOString()
-                };
-
-                const { data, error } = await supabase
-                    .from('sensor_readings')
-                    .insert([currentData])
-                    .select();
-
-                if (error) throw error;
-                
-                // تأثير مرئي
-                const btn = event.target;
-                const originalText = btn.innerHTML;
-                btn.innerHTML = '✅ تم الحفظ!';
-                btn.style.background = 'linear-gradient(135deg, #4CAF50, #45a049)';
-                
-                setTimeout(() => {
-                    btn.innerHTML = originalText;
-                    btn.style.background = 'linear-gradient(135deg, #2E8B57, #FF6B35)';
-                }, 2000);
-                
-                loadHistoryData();
-            } catch (error) {
-                console.error('❌ خطأ في حفظ البيانات:', error);
-                alert('❌ حدث خطأ في حفظ البيانات في قاعدة البيانات');
-            }
-        }
-
-        // 📋 جلب البيانات التاريخية
-        async function loadHistoryData() {
+        // 📊 جلب أحدث البيانات
+        async function getLatestData() {
             try {
                 const { data, error } = await supabase
                     .from('sensor_readings')
                     .select('*')
                     .order('created_at', { ascending: false })
-                    .limit(15);
+                    .limit(1)
+                    .single();
 
                 if (error) throw error;
+                return data;
+            } catch (error) {
+                console.log('❌ خطأ في جلب البيانات:', error);
+                return null;
+            }
+        }
 
-                const tbody = document.getElementById('readingsBody');
-                document.getElementById('readingsCount').textContent = `عدد القراءات: ${data.length}`;
+        // 📋 جلب البيانات التاريخية
+        async function getHistoryData() {
+            try {
+                const { data, error } = await supabase
+                    .from('sensor_readings')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(10);
+
+                if (error) throw error;
+                return data;
+            } catch (error) {
+                console.log('❌ خطأ في جلب التاريخ:', error);
+                return [];
+            }
+        }
+
+        // 🎯 تحديث الواجهة
+        async function updateDashboard() {
+            const latestData = await getLatestData();
+            const historyData = await getHistoryData();
+
+            // تحديث اللوحة الرئيسية
+            if (latestData) {
+                document.getElementById('temperature').textContent = latestData.temperature?.toFixed(1) || '--';
+                document.getElementById('humidity').textContent = latestData.humidity?.toFixed(1) || '--';
+                document.getElementById('weight').textContent = latestData.weight?.toFixed(1) || '--';
+                document.getElementById('battery').textContent = latestData.battery?.toFixed(1) || '--';
                 
-                if (data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">لا توجد بيانات مسجلة بعد</td></tr>';
-                    return;
-                }
+                document.getElementById('status').innerHTML = '✅ متصل بقاعدة البيانات';
+                document.getElementById('lastUpdate').textContent = `آخر تحديث: ${new Date(latestData.created_at).toLocaleTimeString('ar-SA')}`;
+            } else {
+                document.getElementById('status').innerHTML = '❌ لا توجد بيانات حالياً';
+            }
 
-                tbody.innerHTML = data.map(reading => `
+            // تحديث الجدول
+            const tbody = document.getElementById('readingsBody');
+            document.getElementById('readingsCount').textContent = `عدد القراءات: ${historyData.length}`;
+            
+            if (historyData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">لا توجد بيانات مسجلة بعد</td></tr>';
+            } else {
+                tbody.innerHTML = historyData.map(reading => `
                     <tr>
                         <td>${new Date(reading.created_at).toLocaleString('ar-SA')}</td>
                         <td>${reading.temperature}°C</td>
@@ -577,40 +149,17 @@
                         <td>${reading.battery}%</td>
                     </tr>
                 `).join('');
-            } catch (error) {
-                console.error('❌ خطأ في جلب البيانات التاريخية:', error);
-                document.getElementById('readingsBody').innerHTML = 
-                    '<tr><td colspan="5" style="text-align: center; color: #ff6b6b;">❌ خطأ في تحميل البيانات</td></tr>';
             }
         }
 
         // 🔄 التحديث التلقائي
-        async function updateData() {
-            try {
-                const data = await fetchDataFromESP32();
-                updateDashboard(data);
-            } catch (error) {
-                console.error('❌ خطأ في التحديث:', error);
-                updateDashboard(null);
-            }
+        function startAutoUpdate() {
+            updateDashboard(); // تحديث فوري
+            setInterval(updateDashboard, 5000); // تحديث كل 5 ثواني
         }
 
         // 🚀 بدء التطبيق
-        document.addEventListener('DOMContentLoaded', async function() {
-            console.log('🚀 بدء تشغيل النظام...');
-            
-            // تهيئة الرسوم البيانية
-            initializeCharts();
-            
-            // تحميل البيانات الأولية
-            await updateData();
-            await loadHistoryData();
-            
-            // التحديث التلقائي كل 5 ثواني
-            setInterval(updateData, 5000);
-            
-            console.log('✅ النظام جاهز للتشغيل');
-        });
+        document.addEventListener('DOMContentLoaded', startAutoUpdate);
     </script>
 </body>
 </html>
